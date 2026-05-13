@@ -18,6 +18,20 @@ class ProductService {
     };
   }
 
+  Future<void> deleteProduct(int productId) async {
+    final url = Uri.parse('${ApiConstants.productsEndpoint}/$productId');
+
+    final response = await http.delete(url, headers: _headers);
+
+    final responseBody = jsonDecode(response.body);
+
+    if (response.statusCode != 200 && response.statusCode != 204) {
+      final message =
+          responseBody['message']?.toString() ?? 'Gagal menghapus produk.';
+      throw Exception(message);
+    }
+  }
+
   Future<List<Product>> getProducts() async {
     final url = Uri.parse(ApiConstants.productsEndpoint);
 

@@ -5,6 +5,7 @@ class Product {
   final String description;
   final String? createdAt;
   final String? updatedAt;
+  bool isDeleted; // field baru untuk menandai produk yang dihapus
 
   Product({
     required this.id,
@@ -13,6 +14,7 @@ class Product {
     required this.description,
     this.createdAt,
     this.updatedAt,
+    this.isDeleted = false, // nilai default false, artinya produk tidak dihapus
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
@@ -23,6 +25,8 @@ class Product {
       description: json['description']?.toString() ?? '',
       createdAt: json['created_at']?.toString(),
       updatedAt: json['updated_at']?.toString(),
+      isDeleted:
+          json['is_deleted'] ?? false, // ambil status delete dari API jika ada
     );
   }
 

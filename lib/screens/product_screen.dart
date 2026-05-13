@@ -6,6 +6,7 @@ import '../services/storage_service.dart';
 import '../widgets/product_card.dart';
 import 'add_product_screen.dart';
 import 'login_screen.dart';
+import 'product_detail_screen.dart';
 import 'submit_task_screen.dart';
 
 class ProductScreen extends StatefulWidget {
@@ -92,6 +93,21 @@ class _ProductScreenState extends State<ProductScreen> {
     );
   }
 
+  Future<void> _openProductDetailScreen(Product product) async {
+    if (_token == null) return;
+
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ProductDetailScreen(product: product, token: _token!),
+      ),
+    );
+
+    if (result == true) {
+      await _loadProducts();
+    }
+  }
+
   Future<void> _openAddProductScreen() async {
     if (_token == null) return;
 
@@ -117,7 +133,7 @@ class _ProductScreenState extends State<ProductScreen> {
   Widget _buildHeader() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(24, 28, 24, 34),
+      padding: const EdgeInsets.fromLTRB(24, 28, 24, 30),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -135,8 +151,8 @@ class _ProductScreenState extends State<ProductScreen> {
           Row(
             children: [
               Container(
-                width: 62,
-                height: 62,
+                width: 58,
+                height: 58,
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.18),
                   borderRadius: BorderRadius.circular(18),
@@ -147,35 +163,29 @@ class _ProductScreenState extends State<ProductScreen> {
                 ),
                 child: const Icon(
                   Icons.storefront_rounded,
+                  size: 32,
                   color: Colors.white,
-                  size: 34,
                 ),
               ),
               const Spacer(),
-              IconButton(
-                onPressed: _loadProducts,
+              _headerIconButton(
+                icon: Icons.refresh_rounded,
                 tooltip: 'Refresh',
-                style: IconButton.styleFrom(
-                  backgroundColor: Colors.white.withOpacity(0.16),
-                ),
-                icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+                onPressed: _loadProducts,
               ),
-              const SizedBox(width: 8),
-              IconButton(
-                onPressed: _logout,
+              const SizedBox(width: 10),
+              _headerIconButton(
+                icon: Icons.logout_rounded,
                 tooltip: 'Logout',
-                style: IconButton.styleFrom(
-                  backgroundColor: Colors.white.withOpacity(0.16),
-                ),
-                icon: const Icon(Icons.logout_rounded, color: Colors.white),
+                onPressed: _logout,
               ),
             ],
           ),
-          const SizedBox(height: 22),
+          const SizedBox(height: 24),
           const Text(
             'Produk Saya',
             style: TextStyle(
-              fontSize: 29,
+              fontSize: 30,
               fontWeight: FontWeight.w900,
               color: Colors.white,
               letterSpacing: -0.4,
@@ -184,12 +194,13 @@ class _ProductScreenState extends State<ProductScreen> {
           const SizedBox(height: 8),
           Text(
             _products.isEmpty
-                ? 'Kelola draft produk yang akan kamu tambahkan.'
+                ? 'Kelola draft produk kamu sebelum melakukan submit tugas.'
                 : '${_products.length} produk tersimpan sebagai draft.',
             style: TextStyle(
               fontSize: 15,
               height: 1.5,
               color: Colors.white.withOpacity(0.88),
+              fontWeight: FontWeight.w400,
             ),
           ),
         ],
@@ -197,48 +208,90 @@ class _ProductScreenState extends State<ProductScreen> {
     );
   }
 
-  Widget _buildLoading() {
-    return const Center(
-      child: CircularProgressIndicator(color: Color(0xFF0F766E)),
+  Widget _headerIconButton({
+    required IconData icon,
+    required String tooltip,
+    required VoidCallback onPressed,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          width: 46,
+          height: 46,
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.18),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white.withOpacity(0.28), width: 1),
+          ),
+          child: Icon(icon, color: Colors.white, size: 24),
+        ),
+      ),
     );
   }
 
-  Widget _buildError() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+  Widget _buildContent() {
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(color: Color(0xFF0F766E)),
+      );
+    }
+
+    if (_errorMessage != null) {
+      return RefreshIndicator(
+        color: const Color(0xFF0F766E),
+        onRefresh: _loadProducts,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(24, 34, 24, 24),
           children: [
+            const SizedBox(height: 80),
             Container(
-              width: 82,
-              height: 82,
+              width: 86,
+              height: 86,
               decoration: BoxDecoration(
                 color: const Color(0xFFFFFBF5),
-                borderRadius: BorderRadius.circular(22),
+                borderRadius: BorderRadius.circular(26),
                 border: Border.all(color: const Color(0xFFE7DCCB), width: 1),
               ),
               child: const Icon(
                 Icons.error_outline_rounded,
-                size: 44,
-                color: Color(0xFFDC2626),
+                size: 46,
+                color: Color(0xFFB91C1C),
               ),
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 20),
+            const Text(
+              'Gagal Memuat Produk',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w900,
+                color: Color(0xFF1E293B),
+              ),
+            ),
+            const SizedBox(height: 8),
             Text(
               _errorMessage!,
               textAlign: TextAlign.center,
               style: const TextStyle(
-                fontSize: 15,
+                fontSize: 14,
                 height: 1.5,
                 color: Color(0xFF64748B),
               ),
             ),
-            const SizedBox(height: 22),
+            const SizedBox(height: 24),
             SizedBox(
-              height: 50,
-              child: ElevatedButton(
+              height: 54,
+              child: ElevatedButton.icon(
                 onPressed: _loadProducts,
+                icon: const Icon(Icons.refresh_rounded),
+                label: const Text(
+                  'Coba Lagi',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF0F766E),
                   foregroundColor: Colors.white,
@@ -247,209 +300,201 @@ class _ProductScreenState extends State<ProductScreen> {
                     borderRadius: BorderRadius.circular(14),
                   ),
                 ),
-                child: const Text(
-                  'Coba Lagi',
-                  style: TextStyle(fontWeight: FontWeight.w800),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_products.isEmpty) {
+      return RefreshIndicator(
+        color: const Color(0xFF0F766E),
+        onRefresh: _loadProducts,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(24, 34, 24, 24),
+          children: [
+            const SizedBox(height: 80),
+            Center(
+              child: Container(
+                width: 92,
+                height: 92,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFFBF5),
+                  borderRadius: BorderRadius.circular(28),
+                  border: Border.all(color: const Color(0xFFE7DCCB), width: 1),
+                ),
+                child: const Icon(
+                  Icons.inventory_2_outlined,
+                  size: 48,
+                  color: Color(0xFF0F766E),
+                ),
+              ),
+            ),
+            const SizedBox(height: 22),
+            const Text(
+              'Belum Ada Produk',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w900,
+                color: Color(0xFF1E293B),
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Tambahkan draft produk terlebih dahulu agar katalog produk kamu muncul di halaman ini.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                height: 1.5,
+                color: Color(0xFF64748B),
+              ),
+            ),
+            const SizedBox(height: 26),
+            SizedBox(
+              height: 54,
+              child: ElevatedButton.icon(
+                onPressed: _openAddProductScreen,
+                icon: const Icon(Icons.add_rounded),
+                label: const Text(
+                  'Tambah Produk',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF0F766E),
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                 ),
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
+      );
+    }
 
-  Widget _buildEmpty() {
-    return RefreshIndicator(
-      color: const Color(0xFF0F766E),
-      onRefresh: _loadProducts,
-      child: ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(24, 34, 24, 24),
-        children: [
-          const SizedBox(height: 70),
-          Center(
-            child: Container(
-              width: 92,
-              height: 92,
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFFBF5),
-                borderRadius: BorderRadius.circular(26),
-                border: Border.all(color: const Color(0xFFE7DCCB), width: 1),
-              ),
-              child: const Icon(
-                Icons.inventory_2_outlined,
-                size: 46,
-                color: Color(0xFF0F766E),
-              ),
-            ),
-          ),
-          const SizedBox(height: 22),
-          const Text(
-            'Belum Ada Produk',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF1E293B),
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Tambahkan draft produk terlebih dahulu agar katalog produk kamu muncul di halaman ini.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              height: 1.5,
-              color: Color(0xFF64748B),
-            ),
-          ),
-          const SizedBox(height: 26),
-          SizedBox(
-            height: 52,
-            child: ElevatedButton.icon(
-              onPressed: _openAddProductScreen,
-              icon: const Icon(Icons.add_rounded),
-              label: const Text(
-                'Tambah Produk',
-                style: TextStyle(fontWeight: FontWeight.w800),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0F766E),
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProductList() {
     return RefreshIndicator(
       color: const Color(0xFF0F766E),
       onRefresh: _loadProducts,
       child: ListView.builder(
-        padding: const EdgeInsets.fromLTRB(20, 24, 20, 110),
+        padding: const EdgeInsets.fromLTRB(20, 28, 20, 20),
         itemCount: _products.length + 1,
         itemBuilder: (context, index) {
           if (index == 0) {
-            return Container(
-              margin: const EdgeInsets.only(bottom: 18),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFFBF5),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFE7DCCB), width: 1),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Icon(
-                    Icons.info_outline_rounded,
-                    color: Color(0xFF0F766E),
-                    size: 22,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      '${_products.length} produk sudah tersimpan. Tarik layar ke bawah untuk refresh data.',
-                      style: const TextStyle(
-                        fontSize: 13.5,
-                        color: Color(0xFF475569),
-                        height: 1.45,
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 18),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFFBF5),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: const Color(0xFFE7DCCB), width: 1),
+                ),
+                child: const Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.info_outline_rounded,
+                      color: Color(0xFF0F766E),
+                      size: 22,
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Tekan salah satu produk untuk melihat detail produk.',
+                        style: TextStyle(
+                          fontSize: 13.5,
+                          color: Color(0xFF475569),
+                          height: 1.45,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             );
           }
 
           final product = _products[index - 1];
-          return ProductCard(product: product);
+
+          return ProductCard(
+            product: product,
+            onTap: () => _openProductDetailScreen(product),
+          );
         },
       ),
     );
   }
 
-  Widget _buildContent() {
-    if (_isLoading) {
-      return _buildLoading();
-    }
-
-    if (_errorMessage != null) {
-      return _buildError();
-    }
-
-    if (_products.isEmpty) {
-      return _buildEmpty();
-    }
-
-    return _buildProductList();
-  }
-
-  Widget _buildBottomBar() {
+  Widget _buildBottomNavigation() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 10, 20, 16),
       decoration: const BoxDecoration(
         color: Color(0xFFF8EFE3),
         border: Border(top: BorderSide(color: Color(0xFFE7DCCB), width: 1)),
       ),
       child: SafeArea(
-        top: false,
-        child: Row(
-          children: [
-            Expanded(
-              child: SizedBox(
-                height: 52,
-                child: OutlinedButton.icon(
-                  onPressed: _openAddProductScreen,
-                  icon: const Icon(Icons.add_rounded),
-                  label: const Text(
-                    'Tambah',
-                    style: TextStyle(fontWeight: FontWeight.w800),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF0F766E),
-                    side: const BorderSide(
-                      color: Color(0xFF0F766E),
-                      width: 1.3,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 14, 20, 16),
+          child: Row(
+            children: [
+              Expanded(
+                child: SizedBox(
+                  height: 54,
+                  child: OutlinedButton.icon(
+                    onPressed: _openAddProductScreen,
+                    icon: const Icon(Icons.add_rounded),
+                    label: const Text(
+                      'Tambah',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: SizedBox(
-                height: 52,
-                child: ElevatedButton.icon(
-                  onPressed: _openSubmitScreen,
-                  icon: const Icon(Icons.send_rounded),
-                  label: const Text(
-                    'Submit',
-                    style: TextStyle(fontWeight: FontWeight.w800),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0F766E),
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF0F766E),
+                      side: const BorderSide(
+                        color: Color(0xFF0F766E),
+                        width: 1.4,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
+              const SizedBox(width: 12),
+              Expanded(
+                child: SizedBox(
+                  height: 54,
+                  child: ElevatedButton.icon(
+                    onPressed: _openSubmitScreen,
+                    icon: const Icon(Icons.send_rounded),
+                    label: const Text(
+                      'Submit',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0F766E),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -467,7 +512,7 @@ class _ProductScreenState extends State<ProductScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: _buildBottomBar(),
+      bottomNavigationBar: _buildBottomNavigation(),
     );
   }
 }
