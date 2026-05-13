@@ -224,7 +224,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
           SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Pastikan nama, harga, dan deskripsi produk sudah benar sebelum menekan tombol simpan.',
+              'Pastikan nama, harga, dan deskripsi produk sudah benar.',
               style: TextStyle(
                 fontSize: 13.5,
                 color: Color(0xFF475569),
